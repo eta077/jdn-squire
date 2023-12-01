@@ -15,7 +15,7 @@ pub struct User {
 }
 
 /// An enumeration of errors that can occur when interacting with user data.
-#[derive(Debug, Error)]
+#[derive(Debug, Error, PartialEq, Eq)]
 pub enum UserError {
     #[error("unable to lock user state")]
     LockError,
@@ -44,4 +44,145 @@ pub fn update_user(users: UserState, user: User) -> Result<(), UserError> {
     let mut lock_guard = users.write().map_err(|_| UserError::LockError)?;
     lock_guard.insert(user.id.to_owned(), user);
     Ok(())
+}
+
+mod tests {
+    #[test]
+    pub fn test_get_users() {
+        use super::*;
+
+        let list = HashMap::from([(
+            String::from("test"),
+            User {
+                id: String::from("test"),
+                name: String::from("John"),
+                age: 31,
+            },
+        )]);
+        let users = Arc::new(RwLock::new(list));
+        let result = get_users(users);
+
+        assert_eq!(
+            result,
+            Ok(String::from(
+                r#"[
+  {
+    "id": "test",
+    "name": "John",
+    "age": 31
+  }
+]"#
+            ))
+        )
+    }
+
+    #[test]
+    pub fn test_get_user_ok() {
+        use super::*;
+
+        let list = HashMap::from([(
+            String::from("test"),
+            User {
+                id: String::from("test"),
+                name: String::from("John"),
+                age: 31,
+            },
+        )]);
+        let users = Arc::new(RwLock::new(list));
+        let result = get_user(users, String::from("test"));
+
+        assert_eq!(
+            result,
+            Ok(String::from(
+                r#"{
+  "id": "test",
+  "name": "John",
+  "age": 31
+}"#
+            ))
+        )
+    }
+
+    #[test]
+    pub fn test_get_user_unknown() {
+        use super::*;
+
+        let list = HashMap::from([(
+            String::from("test"),
+            User {
+                id: String::from("test"),
+                name: String::from("John"),
+                age: 31,
+            },
+        )]);
+        let users = Arc::new(RwLock::new(list));
+        let result = get_user(users, String::from("john"));
+
+        assert_eq!(result, Err(UserError::UnknownUser))
+    }
+
+    #[test]
+    pub fn test_update_user_new() {
+        use super::*;
+
+        let list = HashMap::new();
+        let users = Arc::new(RwLock::new(list));
+        let user = User {
+            id: String::from("test"),
+            name: String::from("John"),
+            age: 31,
+        };
+        update_user(Arc::clone(&users), user).unwrap();
+
+        let result = get_users(users);
+
+        assert_eq!(
+            result,
+            Ok(String::from(
+                r#"[
+  {
+    "id": "test",
+    "name": "John",
+    "age": 31
+  }
+]"#
+            ))
+        )
+    }
+
+    #[test]
+    pub fn test_update_user_existing() {
+        use super::*;
+
+        let list = HashMap::from([(
+            String::from("test"),
+            User {
+                id: String::from("test"),
+                name: String::from("John"),
+                age: 31,
+            },
+        )]);
+        let users = Arc::new(RwLock::new(list));
+        let user = User {
+            id: String::from("test"),
+            name: String::from("John"),
+            age: 21,
+        };
+        update_user(Arc::clone(&users), user).unwrap();
+
+        let result = get_users(users);
+
+        assert_eq!(
+            result,
+            Ok(String::from(
+                r#"[
+  {
+    "id": "test",
+    "name": "John",
+    "age": 21
+  }
+]"#
+            ))
+        )
+    }
 }
