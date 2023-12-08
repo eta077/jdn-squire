@@ -17,12 +17,13 @@
 
 ### Challenge 2 (with authentication)
 
-* Execute `curl 127.0.0.1:1042/users`. Observe that there is no output, and that the server denies the request
+* Execute `echo "" > cookies` to ensure the cookies file exists and is empty
+* Execute `curl 127.0.0.1:1042/users -b cookies`. Observe that there is no output, and that the server denies the request
 * Execute `curl -d '{"username": "tester", "password": "invalid"}' -H 'Content-Type: application/json' 127.0.0.1:1042/login -c cookies`. Observe the output `invalid credentials`
 * Execute `curl -d '{"username": "tester", "password": "Squ!r3"}' -H 'Content-Type: application/json' 127.0.0.1:1042/login -c cookies`. Observe that the server finds a user with the ID of `1`
-* Execute `curl 127.0.0.1:1042/users`. Observe the output `[]` indicating there are currently no users
+* Execute `curl 127.0.0.1:1042/users -b cookies`. Observe the output `[]` indicating there are currently no users
 * Execute `curl -d '{"id": "test", "name": "John", "age": 42}' -H 'Content-Type: application/json' 127.0.01:1042/users -b cookies`. Observe that the server returns an OK status code
-* Execute `curl 127.0.0.1:1042/users`. Observe that the created user is displayed
+* Execute `curl 127.0.0.1:1042/users -b cookies`. Observe that the created user is displayed
 * Execute `curl -d '{"id": "test", "name": "John", "age": 32}' -H 'Content-Type: application/json' 127.0.01:1042/users -b cookies`. Observe that the server returns an OK status code
-* Execute `curl 127.0.0.1:1042/user/test`. Observe that the user age has been updated
+* Execute `curl 127.0.0.1:1042/user/test -b cookies`. Observe that the user age has been updated
 * Feel free to repeat with different values
